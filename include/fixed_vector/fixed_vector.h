@@ -526,8 +526,7 @@ template <class T,size_t Capacity>
 {
     return
         a.size() == b.size() &&
-        std::equal(a.begin(),a.end(),b.begin()
-   );
+        std::equal(a.begin(),a.end(),b.begin());
 }
 
 template <class T,size_t Capacity>
