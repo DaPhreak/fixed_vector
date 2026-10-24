@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="phreak::fixed_vector&lt;*,*&gt;">
+  <DisplayString>{{ size={mSize} }}</DisplayString>
+  <Expand>
+    <Item Name="[size]">mSize</Item>
+    <IndexListItems>
+      <Size>mSize</Size>
+      <ValueNode>*($T1*)((mStorage)+($i*sizeof($T1)))</ValueNode>
+    </IndexListItems>
+  </Expand>
+</Type>
+
+</AutoVisualizer>
