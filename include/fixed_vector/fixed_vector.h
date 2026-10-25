@@ -529,20 +529,26 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::erase(cons
 template <class T,size_t Capacity>
 void fixed_vector<T,Capacity>::swap(fixed_vector& s) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_move_constructible_v<T>)
 {
-    if (this == &s) return;
+    if (this == &s) {
+        return;
+    }
     fixed_vector* longer{size() >= s.size() ? this : &s};
     fixed_vector* shorter{longer == this ? &s : this};
-    const auto n{shorter->mSize};
-
-    std::swap_ranges(data(),data() + n,s.data());
+    const auto ls{longer->mSize};
+    const auto ns{shorter->mSize};
+    
+    std::swap_ranges(data(),data() + ns,s.data());
+    if (ns == ls) {
+        return;
+    }
     std::uninitialized_move(
-        longer->data() + n,
-        longer->data() + longer->mSize,
-        shorter->data() + n
+        longer->data() + ns,
+        longer->data() + ls,
+        shorter->data() + ns
     );
-    shorter->mSize = longer->mSize;
-    std::destroy(longer->data() + n, longer->data() + longer->mSize);
-    longer->mSize = n;
+    shorter->mSize = ls;
+    std::destroy(longer->data() + ns,longer->data() + ls);
+    longer->mSize = ns;
 }
 
 template <class T,size_t Capacity>
