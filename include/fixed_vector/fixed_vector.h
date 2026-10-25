@@ -140,7 +140,7 @@ template <class T,std::size_t Capacity>
 fixed_vector<T,Capacity>::~fixed_vector() noexcept
 {
     if constexpr (!std::is_trivially_destructible_v<T>) {
-        clear();
+        shrink(0);
     }
 }
 
@@ -158,7 +158,7 @@ fixed_vector<T,Capacity>::fixed_vector(fixed_vector&& s) noexcept(std::is_nothro
 {
     std::uninitialized_move_n(s.begin(),s.size(),begin());
     mSize = s.mSize;
-    s.clear();
+    s.shrink(0);
 }
 
 template <class T,std::size_t Capacity>
@@ -205,7 +205,7 @@ template <class T,std::size_t Capacity>
 fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (fixed_vector&& s) noexcept(std::is_nothrow_move_assignable_v<T> && std::is_nothrow_move_constructible_v<T>)
 {
     assign_n(std::make_move_iterator(s.begin()),s.size());
-    s.clear();
+    s.shrink(0);
     return *this;
 }
 
@@ -318,14 +318,7 @@ void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
 template <class T,std::size_t Capacity>
 void fixed_vector<T,Capacity>::clear() noexcept
 {
-    if (mSize) {
-        if constexpr (!std::is_trivially_destructible_v<T>) {
-            for (auto it{begin()},e{it+mSize}; it != e; ++it ) {
-                std::destroy_at(it);
-            }
-        }
-        mSize = {};
-    }
+    shrink(0);
 }
 
 template <class T,std::size_t Capacity>
