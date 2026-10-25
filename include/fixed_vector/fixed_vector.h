@@ -28,8 +28,8 @@ public:
 
     constexpr fixed_vector() noexcept {};
     ~fixed_vector() noexcept;
-    fixed_vector(const fixed_vector& s);
-    fixed_vector(fixed_vector&& s) noexcept;
+    fixed_vector(const fixed_vector& s) noexcept(std::is_nothrow_copy_constructible_v<T>);
+    fixed_vector(fixed_vector&& s) noexcept(std::is_nothrow_move_constructible_v<T>);
 
     template <class... Args>
     explicit fixed_vector(const size_type count,Args&&... args);
@@ -37,8 +37,8 @@ public:
     template <class U = T,std::enable_if_t<std::is_constructible_v<T,U>>* = nullptr>
     fixed_vector(std::initializer_list<U> init);
 
-    fixed_vector& operator = (const fixed_vector& s);
-    fixed_vector& operator = (fixed_vector&& s) noexcept;
+    fixed_vector& operator = (const fixed_vector& s) noexcept(std::is_nothrow_copy_assignable_v<T>);
+    fixed_vector& operator = (fixed_vector&& s) noexcept(std::is_nothrow_move_assignable_v<value_type>);
     
     template <class U = T,std::enable_if_t<std::is_constructible_v<T,U>>* = nullptr>
     fixed_vector& operator = (std::initializer_list<U> init);
@@ -102,28 +102,28 @@ public:
     iterator insert(const const_iterator pos,T&& value);
 
     template <class... Args>
-    reference unchecked_emplace_back(Args&&... args);
+    reference unchecked_emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible_v<T,Args...>);
     template <class... Args>
     reference emplace_back(Args&&... args);
     template <class... Args>
-    pointer try_emplace_back(Args&&... args);
+    pointer try_emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible_v<T,Args...>);
     
-    reference unchecked_push_back(const T& v);
-    reference unchecked_push_back(T&& v);
+    reference unchecked_push_back(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>);
+    reference unchecked_push_back(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>);
     reference push_back(const T& v);
     reference push_back(T&& v);
-    pointer try_push_back(const T& v);
-    pointer try_push_back(T&& v);
+    pointer try_push_back(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>);
+    pointer try_push_back(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>);
 
     void pop_back() noexcept;
 
     iterator erase(const const_iterator pos) noexcept;
     iterator erase(const const_iterator first,const const_iterator last) noexcept;
 
-    void swap(fixed_vector& s) noexcept;
+    void swap(fixed_vector& s) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_move_constructible_v<T>);
 private:
     size_type mSize{};
-    std::byte mStorage[ sizeof(T) * Capacity ];
+    alignas(T) std::byte mStorage[ sizeof(T) * Capacity ];
 };
 
 template <class T,size_t Capacity>
@@ -135,14 +135,14 @@ fixed_vector<T,Capacity>::~fixed_vector() noexcept
 }
 
 template <class T,size_t Capacity>
-fixed_vector<T,Capacity>::fixed_vector(const fixed_vector& s)
+fixed_vector<T,Capacity>::fixed_vector(const fixed_vector& s) noexcept(std::is_nothrow_copy_constructible_v<T>)
 {
     std::uninitialized_copy_n(s.data(),s.size(),data());
     mSize = s.mSize;
 }
 
 template <class T,size_t Capacity>
-fixed_vector<T,Capacity>::fixed_vector(fixed_vector&& s) noexcept
+fixed_vector<T,Capacity>::fixed_vector(fixed_vector&& s) noexcept(std::is_nothrow_move_constructible_v<T>)
 {
     std::uninitialized_move_n(s.data(),s.size(),data());
     mSize = s.mSize;
@@ -164,7 +164,7 @@ fixed_vector<T,Capacity>::fixed_vector(std::initializer_list<U> init)
 }
 
 template <class T,size_t Capacity>
-fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (const fixed_vector& s)
+fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (const fixed_vector& s) noexcept(std::is_nothrow_copy_assignable_v<T>)
 {
     if (&s != this) {
         assign_n(s.data(),s.size());
@@ -173,7 +173,7 @@ fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (const fixed_vect
 }
 
 template <class T,size_t Capacity>
-fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (fixed_vector&& s) noexcept
+fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (fixed_vector&& s) noexcept(std::is_nothrow_move_assignable_v<T>)
 {
     assign_n(std::make_move_iterator(s.data()),s.size());
     s.clear();
@@ -427,7 +427,7 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::insert(con
 
 template <class T,size_t Capacity>
 template <class... Args>
-typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_emplace_back(Args&&... args)
+typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible_v<T,Args...>)
 {
     assert(!full());
     reference res{*(data() + mSize)};
@@ -448,7 +448,7 @@ typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::emplace_b
 
 template <class T,size_t Capacity>
 template <class... Args>
-typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_emplace_back(Args&&... args)
+typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible_v<T,Args...>)
 {
     if (full()) {
         return {};
@@ -457,13 +457,13 @@ typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_emplace
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_push_back(const T& v)
+typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_push_back(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>)
 {
      return unchecked_emplace_back(v);
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_push_back(T&& v)
+typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_push_back(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>)
 {
      return unchecked_emplace_back(std::move(v));
 }
@@ -481,13 +481,13 @@ typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::push_back
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_push_back(const T& v)
+typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_push_back(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>)
 {
      return try_emplace_back(v);
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_push_back(T&& v)
+typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::try_push_back(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>)
 {
      return try_emplace_back(std::move(v));
 }
@@ -535,7 +535,7 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::erase(cons
 }
 
 template <class T,size_t Capacity>
-void fixed_vector<T,Capacity>::swap(fixed_vector& s) noexcept
+void fixed_vector<T,Capacity>::swap(fixed_vector& s) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_move_constructible_v<T>)
 {
     using std::swap;
     const auto ls{size()};
@@ -604,7 +604,7 @@ template <class T,size_t Capacity>
 namespace std {
 
 template <class T,size_t Capacity>
-void swap (phreak::fixed_vector<T,Capacity>& lhs,phreak::fixed_vector<T,Capacity>& rhs) noexcept
+void swap (phreak::fixed_vector<T,Capacity>& lhs,phreak::fixed_vector<T,Capacity>& rhs) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_move_constructible_v<T>)
 {
     lhs.swap(rhs);
 }
