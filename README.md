@@ -38,7 +38,6 @@ target_link_libraries(my_app PRIVATE fixed_vector)
 
 ## Notes
 
-- A moved-from `fixed_vector` is always empty. Unlike `std::inplace_vector`, it is therefore never trivially copyable.
 - Initializer lists construct elements in place: `{"a", "b"}` creates each `std::string` directly, without temporary copies.
 - Arguments may refer to elements of the same vector, e.g. `v.insert(v.begin(), v[2])`.
 - Appending never invalidates iterators to existing elements.
