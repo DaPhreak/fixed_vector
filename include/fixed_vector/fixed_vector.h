@@ -360,7 +360,7 @@ template <class T,std::size_t Capacity>
 template <class InputIt>
 void fixed_vector<T,Capacity>::assign_n(InputIt first,const size_type count)
 {
-    if (count >  Capacity) {
+    if (count > Capacity) {
         throw std::bad_alloc{};
     }
     auto it{begin()};
@@ -538,22 +538,10 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::erase(cons
     assert(first <= last);
     assert(first >= begin());
     assert(last <= end());
-    const iterator itFirst{const_cast<iterator> (first)};
-    if (first == last) {
-        return itFirst;
-    }
-    std::move(
-        const_cast<iterator> (last),
-        end(),
-        itFirst);
-    if constexpr (!std::is_trivially_destructible_v<T>) {
-        for (const_iterator it{first },its{end() - 1}; it != last; ++it,--its) {
-            std::destroy_at(its);
-            --mSize;
-        }
-    } else {
-        mSize -= last - first;
-    }
+    const auto itFirst{const_cast<iterator>(first)};
+    const auto newEnd{std::move(const_cast<iterator>(last),end(),itFirst)};
+    std::destroy(newEnd,end());
+    mSize = static_cast<size_type>(newEnd - begin());
     return itFirst;
 }
 
