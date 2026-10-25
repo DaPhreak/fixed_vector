@@ -89,8 +89,6 @@ public:
     static constexpr void shrink_to_fit() noexcept {}
 
     template <class... Args>
-    void unchecked_resize(const size_type count,Args&&... args);
-    template <class... Args>
     void resize(const size_type count,Args&&... args);
     void clear() noexcept;
 
@@ -130,6 +128,8 @@ public:
 
     void swap(fixed_vector& s) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_move_constructible_v<T>);
 private:
+    void shrink(const size_type count);
+
     friend void swap(fixed_vector& a, fixed_vector& b) noexcept(noexcept(a.swap(b))) { a.swap(b); }
 
     size_type mSize{};
@@ -294,17 +294,12 @@ constexpr void fixed_vector<T,Capacity>::reserve(size_type new_cap)
 
 template <class T,std::size_t Capacity>
 template <class... Args>
-void fixed_vector<T,Capacity>::unchecked_resize(const size_type count,Args&&... args)
+void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
 {
-    if (count < mSize) {
-        if constexpr (!std::is_trivially_destructible_v<T>) {
-            const auto beg{begin()};
-            for (auto it{beg+count},e{beg+mSize}; it != e; ++it ) {
-                std::destroy_at(it);
-            }
-        }
-        mSize = count;
-    } else if (count > mSize) {
+    if (count > Capacity) {
+        throw std::bad_alloc{};
+    }
+    if (count > mSize) {
         assert(count <= Capacity);
         const auto beg{begin()};
         while (mSize < count) {
@@ -315,17 +310,9 @@ void fixed_vector<T,Capacity>::unchecked_resize(const size_type count,Args&&... 
             }
             ++mSize;
         }
+    } else {
+        shrink(count);
     }
-}
-
-template <class T,std::size_t Capacity>
-template <class... Args>
-void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
-{
-    if (count > Capacity) {
-        throw std::bad_alloc{};
-    }
-    unchecked_resize(count,std::forward<Args>(args)...);
 }
 
 template <class T,std::size_t Capacity>
@@ -366,7 +353,7 @@ void fixed_vector<T,Capacity>::assign(const size_type count,Args&&... args)
             }
         }
     }
-    unchecked_resize(count);
+    shrink(count);
 }
 
 template <class T,std::size_t Capacity>
@@ -390,7 +377,7 @@ void fixed_vector<T,Capacity>::assign_n(InputIt first,const size_type count)
             unchecked_emplace_back(*first);
         }
     }
-    unchecked_resize(count);
+    shrink(count);
 }
 
 template <class T,std::size_t Capacity>
@@ -418,7 +405,7 @@ void fixed_vector<T,Capacity>::assign(InputIt first,const InputIt last)
                 emplace_back(*first);
             }
         }
-        unchecked_resize(ns);
+        shrink(ns);
     }
 }
 
@@ -593,6 +580,21 @@ void fixed_vector<T,Capacity>::swap(fixed_vector& s) noexcept(std::is_nothrow_sw
     shorter->mSize = ls;
     std::destroy(longer->begin() + ss,longer->begin() + ls);
     longer->mSize = ss;
+}
+
+template <class T,std::size_t Capacity>
+void fixed_vector<T,Capacity>::shrink(const size_type count)
+{
+    assert(count <= mSize);
+    if (count < mSize) {
+        if constexpr (!std::is_trivially_destructible_v<T>) {
+            const auto beg{begin()};
+            for (auto it{beg+count},e{beg+mSize}; it != e; ++it ) {
+                std::destroy_at(it);
+            }
+        }
+        mSize = count;
+    }
 }
 
 template <class T,std::size_t Capacity>
