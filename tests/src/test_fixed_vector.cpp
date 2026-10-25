@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -122,13 +123,40 @@ TEST_CASE("Test fixed_vector", "[vector]")
         for ( size_t I{}; I < A.size(); ++I ) {
             REQUIRE( (A[I] == std::to_string( I + 1 ) ) );
         }
-        Vec B{};
-        B.resize(3);
-        B=A;
+        auto B{A};
         REQUIRE ( A == B );
+        REQUIRE ( A <= B );
+        REQUIRE ( A >= B );
         REQUIRE ( !(A != B) );
+        REQUIRE ( !(A < B) );
+        REQUIRE ( !(A > B) );
+        B.pop_back();
+        REQUIRE ( !( A == B ) );
+        REQUIRE ( A != B );
+        REQUIRE ( !( A < B ) );
+        REQUIRE ( !( A <= B ) );
+        REQUIRE ( A > B );
+        REQUIRE ( A >= B );
+        REQUIRE ( !( B == A ) );
+        REQUIRE ( B != A );
+        REQUIRE ( B < A );
+        REQUIRE ( B <= A );
+        REQUIRE ( !( B > A ) );
+        REQUIRE ( !( B >= A ) );
+        B.emplace_back( "0" );
+        REQUIRE ( !( A == B ) );
+        REQUIRE ( A != B );
+        REQUIRE ( !( A < B ) );
+        REQUIRE ( !( A <= B ) );
+        REQUIRE ( A > B );
+        REQUIRE ( A >= B );
+        REQUIRE ( !( B == A ) );
+        REQUIRE ( B != A );
+        REQUIRE ( B < A );
+        REQUIRE ( B <= A );
+        REQUIRE ( !( B > A ) );
+        REQUIRE ( !( B >= A ) );
     }
-
     {
         Vec B{};
 
@@ -151,6 +179,17 @@ TEST_CASE("Test fixed_vector", "[vector]")
         REQUIRE( B.size() == Vec::max_size() );
         REQUIRE( B.back() == "Jo" );
         REQUIRE( A.back() == "5" );
+        B.resize(3);
+        std::swap( A, B );
+        REQUIRE( A.size() == 3 );
+        REQUIRE( B.size() == Vec::max_size() );
+        REQUIRE( B.back() == "5" );
+        REQUIRE( A.back() == "B" );
+        std::swap( A, B );
+        REQUIRE( B.size() == 3 );
+        REQUIRE( A.size() == Vec::max_size() );
+        REQUIRE( A.back() == "5" );
+        REQUIRE( B.back() == "B" );
     }
     {
         Vec B{};

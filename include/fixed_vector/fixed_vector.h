@@ -46,34 +46,34 @@ public:
     static constexpr size_type max_size() noexcept { return Capacity; }
     static constexpr size_type capacity() noexcept { return Capacity; }
 
-    constexpr bool empty() const noexcept { return ! mSize; }
+    constexpr bool empty() const noexcept { return !mSize; }
     constexpr bool full() const noexcept { return mSize == Capacity; }
     constexpr size_type size() const noexcept { return mSize; }
 
-    pointer       data() noexcept;
-    const_pointer data() const noexcept;
+    constexpr pointer       data() noexcept;
+    constexpr const_pointer data() const noexcept;
 
-    iterator       begin () noexcept { return data(); }
-    iterator       end   () noexcept { return data() + mSize; }
-    const_iterator begin () const noexcept { return data(); }
-    const_iterator end   () const noexcept { return data() + mSize; }
-    const_iterator cbegin() const noexcept { return data(); }
-    const_iterator cend  () const noexcept { return data() + mSize; }
+    constexpr iterator       begin () noexcept { return data(); }
+    constexpr iterator       end   () noexcept { return data() + mSize; }
+    constexpr const_iterator begin () const noexcept { return data(); }
+    constexpr const_iterator end   () const noexcept { return data() + mSize; }
+    constexpr const_iterator cbegin() const noexcept { return data(); }
+    constexpr const_iterator cend  () const noexcept { return data() + mSize; }
 
-    reverse_iterator       rbegin () noexcept { return reverse_iterator(end ()); }
-    reverse_iterator       rend   () noexcept { return reverse_iterator(data()); }
-    const_reverse_iterator rbegin () const noexcept { return const_reverse_iterator(end ()); }
-    const_reverse_iterator rend   () const noexcept { return const_reverse_iterator(data()); }
-    const_reverse_iterator crbegin() const noexcept { return rbegin(); }
-    const_reverse_iterator crend  () const noexcept { return rend  (); }
+    constexpr reverse_iterator       rbegin () noexcept { return reverse_iterator(end ()); }
+    constexpr reverse_iterator       rend   () noexcept { return reverse_iterator(data()); }
+    constexpr const_reverse_iterator rbegin () const noexcept { return const_reverse_iterator(end ()); }
+    constexpr const_reverse_iterator rend   () const noexcept { return const_reverse_iterator(data()); }
+    constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+    constexpr const_reverse_iterator crend  () const noexcept { return rend  (); }
 
-    reference       front() noexcept;
-    const_reference front() const noexcept;
-    reference       back() noexcept;
-    const_reference back() const noexcept;
+    constexpr reference       front() noexcept;
+    constexpr const_reference front() const noexcept;
+    constexpr reference       back() noexcept;
+    constexpr const_reference back() const noexcept;
     
-    reference       operator [] (const size_type pos) noexcept;
-    const_reference operator [] (const size_type pos) const noexcept;
+    constexpr reference       operator [] (const size_type pos) noexcept;
+    constexpr const_reference operator [] (const size_type pos) const noexcept;
 
     reference       at(const size_type pos);
     const_reference at(const size_type pos) const;
@@ -81,6 +81,8 @@ public:
     static constexpr void reserve(size_type new_cap);
     static constexpr void shrink_to_fit() noexcept {}
 
+    template <class... Args>
+    void unchecked_resize(const size_type count,Args&&... args);
     template <class... Args>
     void resize(const size_type count,Args&&... args);
     void clear() noexcept;
@@ -127,7 +129,9 @@ private:
 template <class T,size_t Capacity>
 fixed_vector<T,Capacity>::~fixed_vector() noexcept
 {
-    clear();
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+        clear();
+    }
 }
 
 template <class T,size_t Capacity>
@@ -185,54 +189,54 @@ fixed_vector<T,Capacity>& fixed_vector<T,Capacity>::operator = (std::initializer
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::data() noexcept
+constexpr typename fixed_vector<T,Capacity>::pointer fixed_vector<T,Capacity>::data() noexcept
 {
     return std::launder(reinterpret_cast<pointer>(mStorage));
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::const_pointer fixed_vector<T,Capacity>::data() const noexcept
+constexpr typename fixed_vector<T,Capacity>::const_pointer fixed_vector<T,Capacity>::data() const noexcept
 {
     return std::launder(reinterpret_cast<const_pointer>(mStorage));
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::front() noexcept
+constexpr typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::front() noexcept
 {
     assert(mSize);
     return *data();
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::const_reference fixed_vector<T,Capacity>::front() const noexcept
+constexpr typename fixed_vector<T,Capacity>::const_reference fixed_vector<T,Capacity>::front() const noexcept
 {
     assert(mSize);
     return *data();
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::back() noexcept
+constexpr typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::back() noexcept
 {
     assert(mSize);
     return *(data() + (mSize - 1));
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::const_reference fixed_vector<T,Capacity>::back() const noexcept
+constexpr typename fixed_vector<T,Capacity>::const_reference fixed_vector<T,Capacity>::back() const noexcept
 {
     assert(mSize);
     return *(data() + (mSize - 1));
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::operator [] (const size_type pos) noexcept
+constexpr typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::operator [] (const size_type pos) noexcept
 {
     assert(pos < mSize);
     return *(data() + pos);
 }
 
 template <class T,size_t Capacity>
-typename fixed_vector<T,Capacity>::const_reference fixed_vector<T,Capacity>::operator [] (const size_type pos) const noexcept
+constexpr typename fixed_vector<T,Capacity>::const_reference fixed_vector<T,Capacity>::operator [] (const size_type pos) const noexcept
 {
     assert(pos < mSize);
     return *(data() + pos);
@@ -266,16 +270,18 @@ constexpr void fixed_vector<T,Capacity>::reserve(size_type new_cap)
 
 template <class T,size_t Capacity>
 template <class... Args>
-void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
+void fixed_vector<T,Capacity>::unchecked_resize(const size_type count,Args&&... args)
 {
-    if (count > Capacity) {
-        throw std::bad_alloc{};
-    }
     if (count < mSize) {
-        const auto beg{data()};
-        std::destroy(beg + count,beg + mSize);
+        if constexpr (!std::is_trivially_destructible_v<T>) {
+            const auto beg{data()};
+            for (auto it{beg+count},e{beg+mSize}; it != e; ++it ) {
+                std::destroy_at(it);
+            }
+        }
         mSize = count;
     } else if (count > mSize) {
+        assert(count <= Capacity);
         auto beg{data()};
         while (mSize < count) {
             if (mSize + 1 == count) {
@@ -289,11 +295,24 @@ void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
 }
 
 template <class T,size_t Capacity>
+template <class... Args>
+void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
+{
+    if (count > Capacity) {
+        throw std::bad_alloc{};
+    }
+    unchecked_resize(count,std::forward<Args>(args)...);
+}
+
+template <class T,size_t Capacity>
 void fixed_vector<T,Capacity>::clear() noexcept
 {
     if (mSize) {
-        auto beg{data()};
-        std::destroy(beg,beg + mSize);
+        if constexpr (!std::is_trivially_destructible_v<T>) {
+            for (auto it{data()},e{it+mSize}; it != e; ++it ) {
+                std::destroy_at(it);
+            }
+        }
         mSize = {};
     }
 }
@@ -336,7 +355,7 @@ void fixed_vector<T,Capacity>::assign_n(InputIt first,const size_type count)
     const size_t osize{mSize};
     if (count >  Capacity) {
         throw std::bad_alloc{};
-    } else  if (count < osize) {
+    } else if (count < osize) {
         resize(count);
     }
     auto itD{data()};
@@ -410,6 +429,7 @@ template <class T,size_t Capacity>
 template <class... Args>
 typename fixed_vector<T,Capacity>::reference fixed_vector<T,Capacity>::unchecked_emplace_back(Args&&... args)
 {
+    assert(!full());
     reference res{*(data() + mSize)};
     new(std::addressof(res)) T(std::forward<Args>(args)...);
     ++mSize;
@@ -476,10 +496,11 @@ template <class T,size_t Capacity>
 void fixed_vector<T,Capacity>::pop_back() noexcept
 {
     assert(mSize);
-    if constexpr (! std::is_trivially_destructible_v<T>) {
-        std::destroy_at(data() + (mSize - 1));
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+        std::destroy_at(data() + --mSize);
+    } else {
+        --mSize;
     }
-    --mSize;
 }
 
 template <class T,size_t Capacity>
@@ -502,7 +523,7 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::erase(cons
         const_cast<iterator> (last),
         end(),
         itFirst);
-    if constexpr (! std::is_trivially_destructible_v<T>) {
+    if constexpr (!std::is_trivially_destructible_v<T>) {
         for (const_iterator it{first },its{end() - 1}; it != last; ++it,--its) {
             std::destroy_at(its);
             --mSize;
@@ -516,23 +537,66 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::erase(cons
 template <class T,size_t Capacity>
 void fixed_vector<T,Capacity>::swap(fixed_vector& s) noexcept
 {
-    fixed_vector tmp{std::move(s)};
-    s = std::move(*this);
-    *this = std::move(tmp);
+    using std::swap;
+    const auto ls{size()};
+    const auto rs{s.size()};
+    const auto max{std::max(ls,rs)};
+    if (!max) {
+        return;
+    }
+    const auto min{std::min(ls,rs)};
+    const auto ld{data()};
+    const auto rd{s.data()};
+
+    for (size_t i{}; i < max; ++i) {
+        if (i < min) {
+            swap(*(ld+i),*(rd+i));
+        } else if (i < rs) {
+            unchecked_emplace_back(std::move(*(rd+i)));
+            std::destroy_at(rd+i);
+            --s.mSize;
+        } else {
+            s.unchecked_emplace_back(std::move(*(ld+i)));
+            std::destroy_at(ld+i);
+            --mSize;
+        }
+    }
 }
 
 template <class T,size_t Capacity>
 [[nodiscard]] constexpr bool operator==(const fixed_vector<T,Capacity>& a,const fixed_vector<T,Capacity>& b) noexcept
 {
-    return
-        a.size() == b.size() &&
-        std::equal(a.begin(),a.end(),b.begin());
+    return std::equal(a.begin(),a.end(),b.begin(),b.end());
 }
 
 template <class T,size_t Capacity>
 [[nodiscard]] constexpr bool operator!=(const fixed_vector<T,Capacity>& a,const fixed_vector<T,Capacity>& b) noexcept
 {
-    return ! (a == b);
+    return !(a == b);
+}
+
+template <class T,size_t Capacity>
+[[nodiscard]] constexpr bool operator<(const fixed_vector<T,Capacity>& a,const fixed_vector<T,Capacity>& b) noexcept
+{
+    return std::lexicographical_compare(a.begin(),a.end(),b.begin(),b.end(),std::less<>{});
+}
+
+template <class T,size_t Capacity>
+[[nodiscard]] constexpr bool operator>(const fixed_vector<T,Capacity>& a,const fixed_vector<T,Capacity>& b) noexcept
+{
+    return b < a;
+}
+
+template <class T,size_t Capacity>
+[[nodiscard]] constexpr bool operator<=(const fixed_vector<T,Capacity>& a,const fixed_vector<T,Capacity>& b) noexcept
+{
+    return !(b < a);
+}
+
+template <class T,size_t Capacity>
+[[nodiscard]] constexpr bool operator>=(const fixed_vector<T,Capacity>& a,const fixed_vector<T,Capacity>& b) noexcept
+{
+    return !(a < b);
 }
 
 } // namespace phreak
