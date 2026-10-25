@@ -7,7 +7,9 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <type_traits>
+#include <limits>
 #include <cstddef>
+#include <cstdint>
 #include <cassert>
 
 namespace phreak {
@@ -131,7 +133,10 @@ private:
 
     friend void swap(fixed_vector& a, fixed_vector& b) noexcept(noexcept(a.swap(b))) { a.swap(b); }
 
-    size_type mSize{};
+    using size_store =
+        std::conditional_t<alignof(T) < sizeof(size_type) && Capacity <= std::numeric_limits<std::uint8_t>::max(),std::uint8_t,size_type>;
+
+    size_store mSize{};
     union { T mData[Capacity]; };
     static_assert( Capacity > 0, "Needs capacity!" );
 };
@@ -303,7 +308,7 @@ void fixed_vector<T,Capacity>::resize(const size_type count,Args&&... args)
         assert(count <= Capacity);
         const auto beg{begin()};
         while (mSize < count) {
-            if (mSize + 1 == count) {
+            if (mSize + 1u == count) {
                 ::new (static_cast<void*>(beg + mSize)) T(std::forward<Args>(args)...);
             } else {
                 ::new (static_cast<void*>(beg + mSize)) T(args...);
@@ -329,7 +334,7 @@ void fixed_vector<T,Capacity>::assign(const size_type count,Args&&... args)
         throw std::bad_alloc{};
     }
     auto it{begin()};
-    const size_type osize{mSize};
+    const auto osize{mSize};
 
     for (size_type i{}; i < count; ++i,++it) {
         if (i + 1 == count) {
@@ -357,7 +362,7 @@ void fixed_vector<T,Capacity>::assign_n(InputIt first,const size_type count)
         throw std::bad_alloc{};
     }
     auto it{begin()};
-    const size_type osize{mSize};
+    const auto osize{mSize};
 
     for (size_type i{}; i < count; ++i,++it,++first) {
         if (i < osize) {
@@ -534,7 +539,7 @@ typename fixed_vector<T,Capacity>::iterator fixed_vector<T,Capacity>::erase(cons
     const auto itFirst{const_cast<iterator>(first)};
     const auto newEnd{std::move(const_cast<iterator>(last),end(),itFirst)};
     std::destroy(newEnd,end());
-    mSize = static_cast<size_type>(newEnd - begin());
+    mSize = static_cast<size_store>(newEnd - begin());
     return itFirst;
 }
 
@@ -574,7 +579,7 @@ void fixed_vector<T,Capacity>::shrink(const size_type count) noexcept
                 std::destroy_at(it);
             }
         }
-        mSize = count;
+        mSize = static_cast<size_store>(count);
     }
 }
 

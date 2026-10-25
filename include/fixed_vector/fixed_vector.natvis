@@ -3,7 +3,7 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
 <Type Name="phreak::fixed_vector&lt;*,*&gt;">
-  <DisplayString>{{ size={mSize} }}</DisplayString>
+  <DisplayString>{{ size={(size_t)mSize} }}</DisplayString>
   <Expand>
     <Item Name="[capacity]">$T2</Item>
     <IndexListItems>

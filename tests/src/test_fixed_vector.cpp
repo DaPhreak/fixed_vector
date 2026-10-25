@@ -75,6 +75,7 @@ static_assert(std::is_same_v<IVec::iterator, int*>);
 static_assert(std::is_same_v<IVec::const_iterator, const int*>);
 static_assert(IVec::capacity() == 4);
 static_assert(IVec::max_size() == 4);
+static_assert(sizeof(phreak::fixed_vector<char, 15>) == 16);
 
 static_assert(std::is_nothrow_default_constructible_v<IVec>);
 static_assert(std::is_nothrow_copy_constructible_v<IVec>);
