@@ -14,7 +14,6 @@ namespace phreak {
 
 template <class T,std::size_t Capacity>
 class fixed_vector {
-    static_assert( Capacity > 0, "Needs capacity!" );
 public:
     using value_type             = T;
     using size_type              = std::size_t;
@@ -128,12 +127,13 @@ public:
 
     void swap(fixed_vector& s) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_move_constructible_v<T>);
 private:
-    void shrink(const size_type count);
+    void shrink(const size_type count) noexcept;
 
     friend void swap(fixed_vector& a, fixed_vector& b) noexcept(noexcept(a.swap(b))) { a.swap(b); }
 
     size_type mSize{};
     union { T mData[Capacity]; };
+    static_assert( Capacity > 0, "Needs capacity!" );
 };
 
 template <class T,std::size_t Capacity>
@@ -571,7 +571,7 @@ void fixed_vector<T,Capacity>::swap(fixed_vector& s) noexcept(std::is_nothrow_sw
 }
 
 template <class T,std::size_t Capacity>
-void fixed_vector<T,Capacity>::shrink(const size_type count)
+void fixed_vector<T,Capacity>::shrink(const size_type count) noexcept
 {
     assert(count <= mSize);
     if (count < mSize) {
